@@ -1,0 +1,3 @@
+rootProject.name = 'TipCaculator'
+
+include ':app'
