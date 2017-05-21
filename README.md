@@ -1,7 +1,7 @@
 
 # Pre-work - *Tip Calculator*
 
-**Name of your app** is a tip calculator application for React Native.
+**Tip Calculator** is a tip calculator application for React Native.
 
 Submitted by: **Dinh Truong Bao Tuan**
 
@@ -14,7 +14,7 @@ Time spent: **X** hours spent in total
 Write steps to run your project on locally
 **Install**
 ```
-npm install -g react-native-cli
+npm install
 ```
 
 **Start the application in development mode**
