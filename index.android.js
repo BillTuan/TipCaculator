@@ -12,7 +12,7 @@ import {
   View
 } from 'react-native';
 
-import Calculator from "./Apps/calculator.js";
+import Calculator from "./Apps/index.js";
 
 export default class TipCaculator extends Component {
   render() {

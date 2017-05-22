@@ -1,40 +1,26 @@
 /* @flow */
 
 import React, {Component} from 'react';
-import {AppRegistry, StyleSheet, Text, View, TextInput, Button, Picker, AsyncStorage} from 'react-native';
-import{Navigator} from "react-native-deprecated-custom-components";
+import {AppRegistry, StyleSheet, Text, View, TextInput, Button, Picker, AsyncStorage, Animated, Keyboard} from 'react-native';
 import SegmentedControlTab from 'react-native-segmented-control-tab';
 
-export default class Cal extends Component {
-  renderScene(route, navigator){
-    switch (route.name) {
-      case "main": return(<CalculatorPage toSetting = {() => {navigator.push({name:"setting"})}}/>);
-      case "setting": return(<Setting backMain = {() => {navigator.pop({name:"main"})}}/>);
-    }
-  }
-  configureScene(route, routeStack){
-    return Navigator.SceneConfigs.FloatFromRight;
-  }
-  render() {
-    return (
-      <Navigator
-        initialRoute={{name:"main"}}
-        renderScene={this.renderScene}
-        configureScene={ this.configureScene }
-      />
-    );
-  }
-}
-
-class CalculatorPage extends Component{
-  constructor() {
-    super()
+export default class CalculatorPage extends Component{
+  constructor(props) {
+    super(props)
     this.state = {
       selectedIndex: 0,
       billAmount: 0,
       result: 0,
       tipAmount: 0,
+      isValid: null,
+      segment_1: 0,
+      segment_2: 0,
+      segment_3: 0,
+      numberPerson: 1,
+      tipPerson: 0,
+      totalPerson:0,
     };
+    this.animatedValue = new Animated.Value(0);
   }
 
   handleIndexChange = (index) => {
@@ -42,8 +28,26 @@ class CalculatorPage extends Component{
       ...this.state,
       selectedIndex: index
     });
-    // console.log(index);
     this.handleBillAmountChange(this.state.billAmount, index);
+  }
+  componentWillMount() {
+    this.inputValue = '';
+  }
+  selectField() {
+    Animated.timing(this.animatedValue, {
+      toValue: 100,
+      duration: 200
+    }).start();
+  }
+
+  deselectField() {
+    if (this.state.billAmount) {
+      return;
+    }
+    Animated.timing(this.animatedValue, {
+      toValue: 0,
+      duration: 200
+    }).start();
   }
 
   handleBillAmountChange(bill, index) {
@@ -63,43 +67,116 @@ class CalculatorPage extends Component{
     var result = bill + (bill * percent);
     result = parseInt(result);
 
+    var tipAmount = bill * percent;
     this.setState({
       result: result,
-      tipAmount: parseInt(bill * percent)
+      tipAmount: parseFloat(tipAmount).toFixed(2)
+    })
+
+    var number = this.state.numberPerson;
+    this.handleNumberPersonChange(number, tipAmount, result);
+  }
+
+  handleNumberPersonChange(number, tipAmount, result){
+    this.setState({numberPerson: number})
+
+    if (!number) {
+      number = 1;
+    } else {
+      number = parseFloat(number);
+    }
+
+    var tipPerson = tipAmount/number;
+    var total = result/number;
+
+    this.setState({
+      tipPerson: parseFloat(tipPerson).toFixed(2),
+      totalPerson: parseFloat(total).toFixed(2),
     })
   }
 
   segmentValue() {
-    return ['10%', '15%', '50%'];
+    return [this.state.segment_1*100 + "%", this.state.segment_2*100 + "%",this.state.segment_3*100 + "%"];
+  }
+
+  componentWillMount(){
+    this.getSegmentValue();
+  }
+
+  async getSegmentValue(){
+    try{
+      let segmentValue_1 = await AsyncStorage.getItem("SEGMENT_1");
+      let segmentValue_2 = await AsyncStorage.getItem("SEGMENT_2");
+      let segmentValue_3 = await AsyncStorage.getItem("SEGMENT_3");
+      console.log(segmentValue_1, segmentValue_2, segmentValue_3);
+      this.setState({
+        segment_1: parseFloat(segmentValue_1),
+        segment_2: parseFloat(segmentValue_2),
+        segment_3: parseFloat(segmentValue_3),
+      });
+      console.log(this.state.segment_1);
+    }catch(error){
+      console.log("Hmm, something when wrong when get data..." + error);
+    }
   }
 
   render() {
+    let that = this;
+    let interpolatedLabelPosition = that.animatedValue.interpolate({
+      inputRange: [0, 100],
+      outputRange: [35, 0]
+    });
+    let interpolatedLabelSize = that.animatedValue.interpolate({
+      inputRange: [0, 100],
+      outputRange: [26, 14]
+    });
+    let borderColor = (this.state.isValid === null)? '#999': ((this.state.isValid === true)? '#88ff00': '#F00');
+    let color = (this.state.isValid === true)? '#88ff00': '#0076FF';
     return (
       <View>
-        <Button
-             tyle={{flex:1, margin:10, fontSize:20}}
-             title="Setting"
-             onPress={this.props.toSetting}
-           />
         <View>
           <Text style={styles.title}>Tip Calculator</Text>
         </View>
 
-        <View>
-          <TextInput
-            placeholder="Amount of bill"
-            placeholderTextColor="blue"
+        <View style={[styles.myInputStyle, { borderColor: borderColor}]}>
+          <Animated.Text
+            style={{fontSize: interpolatedLabelSize, top: interpolatedLabelPosition, color: color}}>
+            Bill Amount
+          </Animated.Text>
+           <TextInput
+            style={styles.textInput}
+            onFocus={()=> {this.selectField()}}
+            onBlur={()=> {this.deselectField()}}
             returnKeyType="done"
             keyboardType='numeric'
-            maxLength={20}
-            style={styles.textInput}
+            maxLength={15}
             autoFocus={true}
             onChangeText= {(billAmount) => this.handleBillAmountChange(billAmount)}
           />
       </View>
 
+      <View style={[styles.myInputStyle, { borderColor: borderColor}]}>
+        <Animated.Text
+          style={{fontSize: interpolatedLabelSize, top: interpolatedLabelPosition, color: color}}>
+          Number of Person
+        </Animated.Text>
+         <TextInput
+          style={styles.textInput}
+          onFocus={()=> {this.selectField()}}
+          onBlur={()=> {this.deselectField()}}
+          returnKeyType="done"
+          keyboardType='numeric'
+          maxLength={15}
+          defaultValue = {this.state.numberPerson.toString()}
+          onChangeText= {(numPerson) => this.handleNumberPersonChange(numPerson,this.state.tipAmount, this.state.result)}
+        />
+    </View>
+
         <View>
           <Text style={styles.text}>Tip Amount: {this.state.tipAmount}</Text>
+        </View>
+        <View>
+          <Text style={styles.text}>Tip Per Person: {this.state.tipPerson}</Text>
         </View>
         <View style={styles.segment}>
           <SegmentedControlTab
@@ -114,101 +191,21 @@ class CalculatorPage extends Component{
         </View>
 
         <View>
-          <Text style={styles.result}>Result: {this.state.result}</Text>
+          <Text style={styles.result}>Total Per Person: {this.state.totalPerson}</Text>
+          <Text style={styles.result}>Total: {this.state.result}</Text>
         </View>
       </View>
     );
   }
 }
 
-class Setting extends Component{
 
-  constructor(){
-    super()
-    this.state = {
-      sceneTransition: "FloatFromRight",
-      scene: "",
-    }
-  }
-
-  setSelectSceneTransition(scene){
-    try {
-      this.setSceneTransition(scene);
-      this.setState({
-        scene: scene
-      });
-    } catch (error) {
-      console.log("Oop!! Something went wrong !!!" + error);
-    }
-  }
-
-  async setSceneTransition(scene){
-    try{
-      await AsyncStorage.setItem('SCENE_SELECTED', scene);
-      this.setState({
-        sceneTransition : scene
-      })
-    }catch(error){
-       console.log("Hmm, something when wrong when set data..." + error);
-    }
-  }
-
-  componentDidMount(){
-    this.getSceneTransition();
-  }
-
-  async getSceneTransition(){
-  try{
-    let sceneTransitionValue = await AsyncStorage.getItem("SCENE_SELECTED");
-    // Store value to State
-    this.setState({
-      sceneTransition : sceneTransitionValue
-    });
-  }catch(error){
-    console.log("Hmm, something when wrong when get data..." + error);
-  }
-}
-
-  render(){
-    return(
-      <View>
-        <Button
-          style={{width:10, flex:0.1}}
-          title="Go Back"
-          onPress={this.props.backMain}
-        />
-
-        <View style={{marginTop:50,padding:10}}>
-        <View>
-          <Text style={{fontSize:25}}>Scene Transitions</Text>
-          <Picker
-            selectedValue={this.state.sceneTransition}
-            onValueChange={(scene) => this.setSelectSceneTransition(scene)}>
-            <Picker.Item label="FloatFromRight" value="FloatFromRight" />
-            <Picker.Item label="FloatFromLeft" value="FloatFromLeft" />
-            <Picker.Item label="FloatFromBottom" value="FloatFromBottom" />
-            <Picker.Item label="FloatFromBottomAndroid" value="FloatFromBottomAndroid" />
-            <Picker.Item label="SwipeFromLeft" value="SwipeFromLeft" />
-            <Picker.Item label="HorizontalSwipeJump" value="HorizontalSwipeJump" />
-            <Picker.Item label="HorizontalSwipeJumpFromRight" value="HorizontalSwipeJumpFromRight" />
-          </Picker>
-        </View>
-      </View>
-
-      </View>
-    );
-  }
-}
 const styles = StyleSheet.create({
   container: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
       marginTop: 64
-  },
-  textInput: {
-      fontSize: 20,
-      margin: 10,
   },
   text:{
     fontSize: 20,
@@ -231,6 +228,26 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 
+  container: {
+    flex: 1,
+    backgroundColor: '#333'
+  },
+  list: {
+    marginTop: 30,
+    marginLeft: 5
+  },
+  myInputStyle: {
+    borderBottomWidth: 1,
+    width: 300,
+    height: 70,
+    margin: 20,
+  },
+  textInput: {
+    height: 60,
+    fontSize: 26,
+    color: 'black'
+  }
+
 });
 
-module.exports = Cal;
+module.exports = CalculatorPage;
