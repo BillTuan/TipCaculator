@@ -5,7 +5,7 @@
 
 Submitted by: **Dinh Truong Bao Tuan**
 
-Time spent: **40** hours spent in total
+Time spent: **25** hours spent in total
 
 **Note** we do not require build this app for all Mobile OS, just based on what is fit for you.
 
