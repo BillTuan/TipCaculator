@@ -3,6 +3,7 @@
 import React, {Component} from 'react';
 import {AppRegistry, StyleSheet, Text, View, TextInput, Button, Picker, AsyncStorage, Animated, Keyboard} from 'react-native';
 import SegmentedControlTab from 'react-native-segmented-control-tab';
+import {TextMask} from 'react-native-masked-text';
 
 export default class CalculatorPage extends Component{
   constructor(props) {
@@ -65,7 +66,7 @@ export default class CalculatorPage extends Component{
     percent = parseFloat(percent) / 100;
 
     var result = bill + (bill * percent);
-    result = parseInt(result);
+    result = parseFloat(result).toFixed(2);
 
     var tipAmount = bill * percent;
     this.setState({
@@ -153,6 +154,7 @@ export default class CalculatorPage extends Component{
             autoFocus={true}
             onChangeText= {(billAmount) => this.handleBillAmountChange(billAmount)}
           />
+
       </View>
 
       <View style={[styles.myInputStyle, { borderColor: borderColor}]}>
@@ -173,10 +175,30 @@ export default class CalculatorPage extends Component{
     </View>
 
         <View>
-          <Text style={styles.text}>Tip Amount: {this.state.tipAmount}</Text>
+          {/* <Text style={styles.text}>Tip Amount: {this.state.tipAmount}</Text> */}
+          <View style={{flexDirection: "row"}}>
+            <Text style={styles.text}>Tip Amount: </Text>
+            <TextMask
+                  value={this.state.tipAmount}
+                  type={'money'}
+                  style = {styles.text}
+                  options={{
+                      unit: "đ"
+                  }} />
+            </View>
         </View>
         <View>
-          <Text style={styles.text}>Tip Per Person: {this.state.tipPerson}</Text>
+          {/* <Text style={styles.text}>Tip Per Person: {this.state.tipPerson}</Text> */}
+          <View style={{flexDirection: "row"}}>
+            <Text style={styles.text}>Tip Per Person: </Text>
+            <TextMask
+                  value={this.state.tipPerson}
+                  type={'money'}
+                  style = {styles.text}
+                  options={{
+                      unit: "đ"
+                  }} />
+            </View>
         </View>
         <View style={styles.segment}>
           <SegmentedControlTab
@@ -186,13 +208,43 @@ export default class CalculatorPage extends Component{
           />
         </View>
         <View>
-          <Text style={styles.text}>Bill Amount: {this.state.billAmount}</Text>
+          {/* <Text style={styles.text}>Bill Amount: {this.state.billAmount}</Text> */}
+          <View style={{flexDirection: "row"}}>
+            <Text style={styles.text}>Bill Amount: </Text>
+            <TextMask
+                  value={this.state.billAmount}
+                  type={'money'}
+                  style = {styles.text}
+                  options={{
+                      unit: "đ"
+                  }} />
+            </View>
           <Text style={styles.text}>Percent: {this.segmentValue()[this.state.selectedIndex]}</Text>
         </View>
 
         <View>
-          <Text style={styles.result}>Total Per Person: {this.state.totalPerson}</Text>
-          <Text style={styles.result}>Total: {this.state.result}</Text>
+          {/* <Text style={styles.result}>Total Per Person: {this.state.totalPerson}</Text> */}
+          <View style={{flexDirection: "row"}}>
+            <Text style={styles.result}>Total Per Person: </Text>
+            <TextMask
+                  value={this.state.totalPerson}
+                  type={'money'}
+                  style = {styles.result}
+                  options={{
+                      unit: "đ"
+                  }} />
+            </View>
+          {/* <Text style={styles.result}>Total: {this.state.result}</Text> */}
+          <View style={{flexDirection: "row"}}>
+            <Text style={styles.result}>Total: </Text>
+            <TextMask
+                  value={this.state.result}
+                  type={'money'}
+                  style = {styles.result}
+                  options={{
+                      unit: "đ"
+                  }} />
+            </View>
         </View>
       </View>
     );
